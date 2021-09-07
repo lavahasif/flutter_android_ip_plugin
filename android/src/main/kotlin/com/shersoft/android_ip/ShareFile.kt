@@ -1,7 +1,6 @@
 package com.shersoft.android_ip
 
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -39,21 +38,21 @@ class ShareFile(var contexts: Context) {
         }
     }
 
-    fun shareAppAsAPK(context: Context) {
+    fun shareAppAsAPK(context: Context): Boolean {
         val app: ApplicationInfo = context.applicationInfo
         val originalApk = app.publicSourceDir
         try {
             //Make new directory in new location
             var tempFile: File = File(contexts.getExternalCacheDir().toString() + "/ExtractedApk")
             //If directory doesn't exists create new
-            if (!tempFile.isDirectory) if (!tempFile.mkdirs()) return
+            if (!tempFile.isDirectory) if (!tempFile.mkdirs()) return false
             //rename apk file to app name
             tempFile =
                 File(tempFile.path + "/" + (app.processName.toString()).replace(".", "_") + ".apk")
             //If file doesn't exists create new
             if (!tempFile.exists()) {
                 if (!tempFile.createNewFile()) {
-                    return
+                    return false;
                 }
             }
             //Copy file to new location
@@ -83,6 +82,7 @@ class ShareFile(var contexts: Context) {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+        return true;
     }
 
     @Throws(IOException::class)

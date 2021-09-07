@@ -99,14 +99,19 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
         when (method) {
 
             NetWork_Interface_enum.Wifi -> result.success(myIp.getdeviceIpAddress_Wifi())
-            NetWork_Interface_enum.Wifi_tether -> result.success(myIp.getIPAddress_Util(true))
+            NetWork_Interface_enum.Wifi_tether -> result.success(
+                myIp.getIpInterface(
+                    network_interfac.wlan1.name
+                )
+            )
+            NetWork_Interface_enum.Wifi_tetherorWifi -> result.success(myIp.getIPAddress_Util(true))
             NetWork_Interface_enum.USB_tether -> result.success(myIp.getIpInterface(network_interfac.rndis0.name))
             NetWork_Interface_enum.Blue_ther -> result.success(myIp.getIpInterface(network_interfac.bt_pan.name))
             NetWork_Interface_enum.Cellular1 -> result.success(myIp.getIpInterface(network_interfac.rmnet_data1.name))
             NetWork_Interface_enum.Cellular2 -> result.success(myIp.getIpInterface(network_interfac.rmnet_data2.name))
             NetWork_Interface_enum.All -> result.success(myIp.getNetworkIp4LoopbackIps().toString())
             NetWork_Interface_enum.getPlatformVersion -> result.success("Android ${Build.VERSION.RELEASE}")
-            NetWork_Interface_enum.shareself -> sharefile.shareAppAsAPK(context)
+            NetWork_Interface_enum.shareself -> result.success(sharefile.shareAppAsAPK(context))
             NetWork_Interface_enum.Private -> myIp.getIpAddress_Private(object :
                 MyIp.VolleyListner {
                 override fun Onresponse(data: String) {
@@ -193,7 +198,7 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
 }
 
 enum class NetWork_Interface_enum {
-    Wifi, Wifi_tether, USB_tether, Blue_ther, Cellular1, Cellular2, All, getPlatformVersion, Private, shareself
+    Wifi, Wifi_tether, Wifi_tetherorWifi, USB_tether, Blue_ther, Cellular1, Cellular2, All, getPlatformVersion, Private, shareself
 }
 
 private const val TAG = "MyBroadcastReceiver"

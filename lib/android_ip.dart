@@ -20,8 +20,8 @@ class AndroidIp {
     return version;
   }
 
-  static Future<String?> get shareself async {
-    final String? version = await _channel.invokeMethod('shareself');
+  static Future<bool?> get shareself async {
+    final bool? version = await _channel.invokeMethod('shareself');
     return version;
   }
 
