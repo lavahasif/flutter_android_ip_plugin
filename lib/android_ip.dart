@@ -30,6 +30,11 @@ class AndroidIp {
     return version;
   }
 
+  static Future<String?> get IpAddress_Wifi_tetherorwifi async {
+    final String? version = await _channel.invokeMethod('Wifi_tetherorWifi');
+    return version;
+  }
+
   static Future<String?> get IpAddress_Private async {
     String? version = await getIp("Private");
     return version;
