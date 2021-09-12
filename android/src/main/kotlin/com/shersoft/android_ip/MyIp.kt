@@ -73,6 +73,9 @@ class MyIp(var contexts: Context) {
         val context: Context = contexts.applicationContext
         val wifiManager = context.getSystemService(ComponentActivity.WIFI_SERVICE) as WifiManager
         val ip = Formatter.formatIpAddress(wifiManager.connectionInfo.ipAddress)
+        if (ip.contains("0.0.0.0"))
+            return "null"
+
         return ip;
     }
 
@@ -399,7 +402,8 @@ class MyIp(var contexts: Context) {
             } else if (key.contains("wlan1")) {
                 networkIp4LoopbackIps.forEach {
                     if (it.key.contains("wlan1")) return it.value
-                    else if (it.key.contains("wlan0")) return it.value
+                    if (getdeviceIpAddress_Wifi().isNullOrEmpty())
+                        if (it.key.contains("wlan0")) return it.value
                 }
             }
             return networkIp4LoopbackIps.getValue(keys)
