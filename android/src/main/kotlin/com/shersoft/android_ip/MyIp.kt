@@ -17,7 +17,7 @@ import com.android.volley.Response
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.shersoft.android_ip.Utils
+import com.shersoft.android_ip.Utilss
 
 import java.io.IOException
 import java.math.BigInteger
@@ -219,14 +219,14 @@ class MyIp(var contexts: Context) {
 
 
                 override fun onResponse(response: String?) {
-                    Log.e("MGLogTag", "GET IP : $response")
+//                    Log.e("MGLogTag", "GET IP : $response")
                     ip = response.toString();
                     runnable.Onresponse(ip)
 
                 }
             }, object : Response.ErrorListener {
                 override fun onErrorResponse(error: VolleyError?) {
-                    ip = "That didn't work!";
+                    ip = "Null";
                     runnable.Onresponse(ip)
                 }
             })
@@ -238,8 +238,8 @@ class MyIp(var contexts: Context) {
         return ip;
     }
 
-    fun getMacAddress_Util(inter: String = "wlan0"): String = Utils.getMACAddress(inter);
-    fun getIPAddress_Util(isTrueip4: Boolean = true): String = Utils.getIPAddress(isTrueip4);
+    fun getMacAddress_Util(inter: String = "wlan0"): String = Utilss.getMACAddress(inter);
+    fun getIPAddress_Util(isTrueip4: Boolean = true): String = Utilss.getIPAddress(isTrueip4);
 
     fun getIPAddress_Wif_3(isTrueip4: Boolean = true): String {
         val wm = contexts.applicationContext.getSystemService(WIFI_SERVICE) as WifiManager?
@@ -396,12 +396,19 @@ class MyIp(var contexts: Context) {
                 networkIp4LoopbackIps.forEach {
                     if (it.key.contains("rmnet_data")) return it.value
                 }
+            } else if (key.contains("wlan1")) {
+                networkIp4LoopbackIps.forEach {
+                    if (it.key.contains("wlan1")) return it.value
+                    else if (it.key.contains("wlan0")) return it.value
+                }
             }
             return networkIp4LoopbackIps.getValue(keys)
         } catch (e: Exception) {
-            return "UnKnown"
+            return "Null";
         }
     }
+
+
 }
 
 enum class network_interfac {

@@ -16,7 +16,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _Connecton_change = '';
+  String _ondeviceconnected = '';
+  String _ondeviceconnected2 = '';
   String _IpAddress_Wifi_tether = 'Unknown';
+  String _IpAddress_Wifi_both = 'Unknown';
   String _IpAddress_Wifi = 'Unknown';
   String _IpAddress_Private = 'Unknown';
   String _IpAddress_USB_tether = 'Unknown';
@@ -25,16 +28,24 @@ class _MyAppState extends State<MyApp> {
   String _IpAddress_Cellular1 = 'Unknown';
   String _IpAddress_Cell = 'Unknown';
   String _IpAddress_Blue_ther = 'Unknown';
+  String _connectedlist = '';
 
   @override
   void initState() {
     super.initState();
-    var listner = new AndroidIp().onConnectivityChanged;
+    var androidIp = new AndroidIp();
+    var listner = androidIp.onConnectivityChanged;
+    var ondeviceconnected = androidIp.onDeviceConnected;
     listner!.listen((event) {
       setState(() {
         _Connecton_change = event;
       });
       initPlatformState();
+    });
+    ondeviceconnected!.listen((event) {
+      setState(() {
+        _ondeviceconnected = _ondeviceconnected + "," + event;
+      });
     });
 
     initPlatformState();
@@ -44,6 +55,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     String IpAddress_Wifi_tether;
     String IpAddress_Wifi;
+    String IpAddress_Wifi_both;
     String IpAddress_Private;
     String IpAddress_USB_tether;
     String IpAddress_Cellular1;
@@ -55,6 +67,9 @@ class _MyAppState extends State<MyApp> {
     try {
       IpAddress_Wifi_tether =
           await AndroidIp.IpAddress_Wifi_tether ?? 'Unknown Number';
+      await AndroidIp.getConnectedList ?? 'Unknown Number';
+      IpAddress_Wifi_both =
+          await AndroidIp.IpAddress_Wifi_tetherorwifi ?? 'Unknown Number';
       IpAddress_Wifi = await AndroidIp.IpAddress_Wifi ?? 'Unknown Number';
       IpAddress_Private = await AndroidIp.IpAddress_Private ?? 'Unknown Number';
       IpAddress_USB_tether =
@@ -75,6 +90,7 @@ class _MyAppState extends State<MyApp> {
       IpAddress_Cellular2 = 'Failed to get ';
       IpAddress_Blue_ther = 'Failed to get ';
       IpAddress_All = 'Failed to get ';
+      IpAddress_Wifi_both = 'Failed to get ';
     }
 
     // If the widget was removed from the tree while the asynchronous platform
@@ -91,6 +107,7 @@ class _MyAppState extends State<MyApp> {
       _IpAddress_Cellular2 = IpAddress_Cellular2;
       _IpAddress_Blue_ther = IpAddress_Blue_ther;
       _IpAddress_All = IpAddress_All;
+      _IpAddress_Wifi_both = IpAddress_Wifi_both;
     });
   }
 
@@ -119,24 +136,49 @@ class _MyAppState extends State<MyApp> {
             Text('Private on: $_IpAddress_Private\n'),
             Row(
               children: [
-                Text('Wifi_tether on: $_IpAddress_Cellular1\n'),
-                SizedBox(width: 25,),
-                RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=>  _copy(_IpAddress_Cellular1))
+                Text('Wifi_tether_both on: $_IpAddress_Wifi_both\n'),
+                SizedBox(
+                  width: 25,
+                ),
+                RaisedButton(
+                    color: Colors.blue,
+                    child: Text("Copy"),
+                    onPressed: () => _copy(_IpAddress_Wifi_both))
               ],
             ),
             Text('Cellular2 on: $_IpAddress_Cellular2\n'),
             Row(
               children: [
-                Text('USB_tether on: $_IpAddress_USB_tether\n'),       SizedBox(width: 25,),
-                RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=>  _copy(_IpAddress_USB_tether))
+                Text('USB_tether on: $_IpAddress_USB_tether\n'),
+                SizedBox(
+                  width: 25,
+                ),
+                RaisedButton(
+                    color: Colors.blue,
+                    child: Text("Copy"),
+                    onPressed: () => _copy(_IpAddress_USB_tether))
               ],
             ),
             Row(
               children: [
                 Text('USB_tether on: $_IpAddress_Blue_ther\n'),
-                RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=>  _copy(_IpAddress_Blue_ther))
+                RaisedButton(
+                    color: Colors.blue,
+                    child: Text("Copy"),
+                    onPressed: () => _copy(_IpAddress_Blue_ther))
               ],
             ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('$_ondeviceconnected2'),
+                RaisedButton(
+                    color: Colors.blue,
+                    child: Text("Copy"),
+                    onPressed: () => setLisIp())
+              ],
+            ),
+            Text('Devices $_ondeviceconnected'),
             Text('All on: $_IpAddress_All\n'),
             RaisedButton(
               color: Colors.blue,
@@ -155,5 +197,17 @@ class _MyAppState extends State<MyApp> {
     var clipboardData = ClipboardData(text: ipAddress_Wifi);
 
     Clipboard.setData(clipboardData);
+  }
+
+  setLisIp() {
+    setState(() {
+      _ondeviceconnected2 = "";
+    });
+
+    var da = new AndroidIp().onDeviceConnected!.listen((event) {
+      setState(() {
+        _ondeviceconnected2 = _ondeviceconnected2 + "," + event;
+      });
+    });
   }
 }

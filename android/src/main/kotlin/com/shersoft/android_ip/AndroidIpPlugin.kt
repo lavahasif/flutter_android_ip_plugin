@@ -18,6 +18,10 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 
 /** AndroidIpPlugin */
@@ -29,7 +33,13 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
         fun onChange(typeevent: String)
     }
 
+    interface IDeviceConnected {
+        fun DeviceConnected(ip: String)
+    }
+
     lateinit var myIp: MyIp
+    lateinit var iDeviceConnected: IDeviceConnected
+    lateinit var connecteddevice: ConnectedDevice
     lateinit var sharefile: ShareFile
     lateinit var context: Context
 
@@ -44,14 +54,18 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
     /// when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
     private lateinit var echannel: EventChannel
+    private lateinit var echannellist: EventChannel
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         context = flutterPluginBinding.applicationContext
 
         myIp = MyIp(context)
+//        iDeviceConnected = this as IDeviceConnected;
+        connecteddevice = ConnectedDevice(context)
         sharefile = ShareFile(context)
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "android_ip")
         echannel = EventChannel(flutterPluginBinding.binaryMessenger, "networklistner")
+        echannellist = EventChannel(flutterPluginBinding.binaryMessenger, "echannellist")
         channel.setMethodCallHandler(this)
         setEventChannel()
 
@@ -91,10 +105,33 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
             }
 
         })
+        echannellist.setStreamHandler(object : EventChannel.StreamHandler {
+            val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+
+                connecteddevice.gethostData(myIp.getDeviceIpAddress(), object : IDeviceConnected {
+                    override fun DeviceConnected(ip: String) {
+//                        println("Event============>$ip")
+                        scope.launch {
+                            events?.success(ip);
+                        }
+
+                    }
+                })
+            }
+
+            override fun onCancel(arguments: Any?) {
+                println(arguments.toString())
+            }
+        })
     }
 
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+//        connecteddevice.executeCmd("ping -c 1 -w 1 192.168.240.156", false);
+
+
+//        connecteddevice.getListOfConnectedDevice();
         val method = NetWork_Interface_enum.valueOf(call.method)
         when (method) {
 
@@ -120,6 +157,13 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
                 }
             })
 
+            NetWork_Interface_enum.ConnectedList -> result.success(
+                connecteddevice.pingHost(
+                    myIp.getIPAddress_Util(
+                        true
+                    ), 1000
+                ).toString()
+            )
             else -> result.notImplemented()
         }
 //        if (call.method == "getPlatformVersion") {
@@ -140,6 +184,7 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
         echannel.setStreamHandler(null)
+        echannellist.setStreamHandler(null)
     }
 
     open class NetworkChangeReceiver(var mybroadcastListlistner: mybroadcastList) :
@@ -198,7 +243,7 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
 }
 
 enum class NetWork_Interface_enum {
-    Wifi, Wifi_tether, Wifi_tetherorWifi, USB_tether, Blue_ther, Cellular1, Cellular2, All, getPlatformVersion, Private, shareself
+    Wifi, Wifi_tether, Wifi_tetherorWifi, USB_tether, Blue_ther, Cellular1, Cellular2, All, getPlatformVersion, Private, shareself, ConnectedList
 }
 
 private const val TAG = "MyBroadcastReceiver"
