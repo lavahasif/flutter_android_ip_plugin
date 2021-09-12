@@ -207,7 +207,7 @@ class ConnectedDevice(var contexts: Context) {
             for (i in 0..255) {
                 var ips = ip + "$i";
 
-                if (pingHost(ips, 50) == 0) {
+                if (pingHost(ips, 1000) == 0) {
 //                    println("Connection============>$ips")
                     iDeviceConnected.DeviceConnected(ips);
 //                Log.i("Connection=======>", "$ips".toString())
