@@ -18,6 +18,7 @@ class _MyAppState extends State<MyApp> {
   String _Connecton_change = '';
   String _ondeviceconnected = '';
   String _ondeviceconnected2 = '';
+  String _status = '';
   String _IpAddress_Wifi_tether = 'Unknown';
   String _IpAddress_Wifi_both = 'Unknown';
   String _IpAddress_Wifi = 'Unknown';
@@ -118,74 +119,86 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Column(
+        body: ListView(
           children: [
-            Text('Changes on: $_Connecton_change\n'),
-            Row(
-              children: [
-                Text('Wifi on: $_IpAddress_Wifi\n'),       SizedBox(width: 25,),
-                RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=> _copy(_IpAddress_Wifi))
-              ],
-            ),
-            Row(
-              children: [
-                Text('Wifi_tether on: $_IpAddress_Wifi_tether\n'),       SizedBox(width: 25,),
-                RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=> _copy(_IpAddress_Wifi_tether))
-              ],
-            ),
-            Text('Private on: $_IpAddress_Private\n'),
-            Row(
-              children: [
-                Text('Wifi_tether_both on: $_IpAddress_Wifi_both\n'),
-                SizedBox(
-                  width: 25,
-                ),
-                RaisedButton(
-                    color: Colors.blue,
-                    child: Text("Copy"),
-                    onPressed: () => _copy(_IpAddress_Wifi_both))
-              ],
-            ),
-            Text('Cellular2 on: $_IpAddress_Cellular2\n'),
-            Row(
-              children: [
-                Text('USB_tether on: $_IpAddress_USB_tether\n'),
-                SizedBox(
-                  width: 25,
-                ),
-                RaisedButton(
-                    color: Colors.blue,
-                    child: Text("Copy"),
-                    onPressed: () => _copy(_IpAddress_USB_tether))
-              ],
-            ),
-            Row(
-              children: [
-                Text('USB_tether on: $_IpAddress_Blue_ther\n'),
-                RaisedButton(
-                    color: Colors.blue,
-                    child: Text("Copy"),
-                    onPressed: () => _copy(_IpAddress_Blue_ther))
-              ],
-            ),
             Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('$_ondeviceconnected2'),
+                Text('Changes on: $_Connecton_change\n'),
+                Row(
+                  children: [
+                    Text('Wifi on: $_IpAddress_Wifi\n'),       SizedBox(width: 25,),
+                    RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=> _copy(_IpAddress_Wifi))
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text('Wifi_tether on: $_IpAddress_Wifi_tether\n'),       SizedBox(width: 25,),
+                    RaisedButton(color:Colors.blue,child:Text("Copy"),onPressed:()=> _copy(_IpAddress_Wifi_tether))
+                  ],
+                ),
+                Text('Private on: $_IpAddress_Private\n'),
+                Row(
+                  children: [
+                    Text('Wifi_tether_both on: $_IpAddress_Wifi_both\n'),
+                    SizedBox(
+                      width: 25,
+                    ),
+                    RaisedButton(
+                        color: Colors.blue,
+                        child: Text("Copy"),
+                        onPressed: () => _copy(_IpAddress_Wifi_both))
+                  ],
+                ),
+                Text('Cellular2 on: $_IpAddress_Cellular2\n'),
+                Row(
+                  children: [
+                    Text('USB_tether on: $_IpAddress_USB_tether\n'),
+                    SizedBox(
+                      width: 25,
+                    ),
+                    RaisedButton(
+                        color: Colors.blue,
+                        child: Text("Copy"),
+                        onPressed: () => _copy(_IpAddress_USB_tether))
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text('USB_tether on: $_IpAddress_Blue_ther\n'),
+                    RaisedButton(
+                        color: Colors.blue,
+                        child: Text("Copy"),
+                        onPressed: () => _copy(_IpAddress_Blue_ther))
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('$_ondeviceconnected2'),
+                    RaisedButton(
+                        color: Colors.blue,
+                        child: Text("Copy"),
+                        onPressed: () => setLisIp())
+                  ],
+                ),
+                Text('Devices $_ondeviceconnected'),
+                Text('All on: $_IpAddress_All\n'),
                 RaisedButton(
-                    color: Colors.blue,
-                    child: Text("Copy"),
-                    onPressed: () => setLisIp())
+                  color: Colors.blue,
+                  child: Text("Share Me"),
+                  onPressed: () async {
+                    await AndroidIp.shareself;
+                  },
+                ),
+                Text("status:$_status"),
+                RaisedButton(
+                  color: Colors.blue,
+                  child: Text("Share Me"),
+                  onPressed: () async {
+                    setShare();
+                  },
+                ),
               ],
-            ),
-            Text('Devices $_ondeviceconnected'),
-            Text('All on: $_IpAddress_All\n'),
-            RaisedButton(
-              color: Colors.blue,
-              child: Text("Share Me"),
-              onPressed: () async {
-                await AndroidIp.shareself;
-              },
             ),
           ],
         ),
@@ -207,6 +220,18 @@ class _MyAppState extends State<MyApp> {
     var da = new AndroidIp().onDeviceConnected!.listen((event) {
       setState(() {
         _ondeviceconnected2 = _ondeviceconnected2 + "," + event;
+      });
+    });
+  }
+
+  setShare() {
+    setState(() {
+      _status = "";
+    });
+
+    var da = new AndroidIp().onShared!.listen((event) {
+      setState(() {
+        _status = event;
       });
     });
   }

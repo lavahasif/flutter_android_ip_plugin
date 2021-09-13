@@ -6,11 +6,13 @@ class AndroidIp {
   static const MethodChannel _channel = const MethodChannel('android_ip');
   static const EventChannel networklistner_channel =
       const EventChannel('networklistner');
+  static const EventChannel share_channel = const EventChannel('sharelistner');
 
   static const EventChannel echannellist_channel =
       const EventChannel('echannellist');
   Stream<String>? _onConnectivityChanged;
   Stream<String>? _onDeviceConnected;
+  Stream<String>? _onShareProcess;
 
   Stream<String>? get onConnectivityChanged {
     _onConnectivityChanged = networklistner_channel
@@ -24,6 +26,12 @@ class AndroidIp {
         .receiveBroadcastStream()
         .map((event) => event.toString());
     return _onDeviceConnected;
+  }
+
+  Stream<String>? get onShared {
+    _onShareProcess =
+        share_channel.receiveBroadcastStream().map((event) => event.toString());
+    return _onShareProcess;
   }
 
   static Future<String?> get platformVersion async {

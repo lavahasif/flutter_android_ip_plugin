@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.*
 import java.io.*
 
 
@@ -38,17 +39,93 @@ class ShareFile(var contexts: Context) {
         }
     }
 
-    fun shareAppAsAPK(context: Context): Boolean {
+
+    fun shareAppAsAPK(context: Context, iShare: AndroidIpPlugin.IShare): Boolean {
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val app: ApplicationInfo = context.applicationInfo
         val originalApk = app.publicSourceDir
+        var tempFile: File = File(contexts.getExternalCacheDir().toString() + "/ExtractedApk")
+        iShare.onFileShared("Progress")
         try {
             //Make new directory in new location
-            var tempFile: File = File(contexts.getExternalCacheDir().toString() + "/ExtractedApk")
+            scope.launch {
+                //If directory doesn't exists create new
+                if (!tempFile.isDirectory) if (!tempFile.mkdirs()) return@launch
+                //rename apk file to app name
+                tempFile =
+                    File(
+                        tempFile.path + "/" + (app.processName.toString()).replace(
+                            ".",
+                            "_"
+                        ) + ".apk"
+                    )
+                //If file doesn't exists create new
+                if (!tempFile.exists()) {
+                    if (!tempFile.createNewFile()) {
+                        return@launch;
+                    }
+            }
+                //Copy file to new location
+                val inp: InputStream = FileInputStream(originalApk)
+                val out: OutputStream = FileOutputStream(tempFile)
+                val buf = ByteArray(1024)
+                var len: Int
+                while (inp.read(buf).also { len = it } > 0) {
+                    out.write(buf, 0, len)
+                }
+                inp.close()
+                out.close()
+                launch(Dispatchers.Main) {
+                    ShareFile(context, tempFile, iShare)
+                }
+            }
+            //Open share dialog
+
+        } catch (e: IOException) {
+            iShare.onFileShared("Error")
+            e.printStackTrace()
+        }
+        return true;
+    }
+
+    private fun ShareFile(
+        context: Context,
+        tempFile: File,
+        iShare: AndroidIpPlugin.IShare
+    ) {
+        val intent = Intent(Intent.ACTION_SEND)
+        //MIME type for apk, might not work in bluetooth sahre as it doesn't support apk MIME type
+
+        intent.type = "application/vnd.android.package-archive"
+        intent.putExtra(
+            Intent.EXTRA_STREAM, FileProvider.getUriForFile(
+                context, context.packageName + ".provider", File(tempFile.path)
+            )
+        )
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        iShare.onFileShared("Finished")
+        contexts.startActivity(intent)
+    }
+
+    fun shareAppAsAPK(context: Context): Boolean {
+
+        val app: ApplicationInfo = context.applicationInfo
+        val originalApk = app.publicSourceDir
+        var tempFile: File = File(contexts.getExternalCacheDir().toString() + "/ExtractedApk")
+        try {
+
             //If directory doesn't exists create new
             if (!tempFile.isDirectory) if (!tempFile.mkdirs()) return false
             //rename apk file to app name
             tempFile =
-                File(tempFile.path + "/" + (app.processName.toString()).replace(".", "_") + ".apk")
+                File(
+                    tempFile.path + "/" + (app.processName.toString()).replace(
+                        ".",
+                        "_"
+                    ) + ".apk"
+                )
             //If file doesn't exists create new
             if (!tempFile.exists()) {
                 if (!tempFile.createNewFile()) {
@@ -66,9 +143,10 @@ class ShareFile(var contexts: Context) {
             inp.close()
             out.close()
             //Open share dialog
-            val intent = Intent(Intent.ACTION_SEND)
+
 //MIME type for apk, might not work in bluetooth sahre as it doesn't support apk MIME type
 
+            val intent = Intent(Intent.ACTION_SEND)
             intent.type = "application/vnd.android.package-archive"
             intent.putExtra(
                 Intent.EXTRA_STREAM, FileProvider.getUriForFile(
@@ -84,6 +162,7 @@ class ShareFile(var contexts: Context) {
         }
         return true;
     }
+
 
     @Throws(IOException::class)
     fun copyStream(`in`: InputStream, out: OutputStream) {

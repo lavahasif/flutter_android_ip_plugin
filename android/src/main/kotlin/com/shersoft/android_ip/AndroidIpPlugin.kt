@@ -37,6 +37,10 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
         fun DeviceConnected(ip: String)
     }
 
+    interface IShare {
+        fun onFileShared(status: String)
+    }
+
     lateinit var myIp: MyIp
     lateinit var iDeviceConnected: IDeviceConnected
     lateinit var connecteddevice: ConnectedDevice
@@ -55,6 +59,7 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
     private lateinit var echannel: EventChannel
     private lateinit var echannellist: EventChannel
+    private lateinit var sharechannel: EventChannel
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         context = flutterPluginBinding.applicationContext
@@ -66,6 +71,7 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "android_ip")
         echannel = EventChannel(flutterPluginBinding.binaryMessenger, "networklistner")
         echannellist = EventChannel(flutterPluginBinding.binaryMessenger, "echannellist")
+        sharechannel = EventChannel(flutterPluginBinding.binaryMessenger, "sharelistner")
         channel.setMethodCallHandler(this)
         setEventChannel()
 
@@ -118,6 +124,27 @@ class AndroidIpPlugin : FlutterPlugin, MethodCallHandler {
 
                     }
                 })
+            }
+
+            override fun onCancel(arguments: Any?) {
+                println(arguments.toString())
+            }
+        })
+        sharechannel.setStreamHandler(object : EventChannel.StreamHandler {
+            val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+
+
+                sharefile.shareAppAsAPK(context, object : IShare {
+                    override fun onFileShared(status: String) {
+                        scope.launch {
+                        events?.success(status)
+                        }
+
+                    }
+
+                })
+
             }
 
             override fun onCancel(arguments: Any?) {

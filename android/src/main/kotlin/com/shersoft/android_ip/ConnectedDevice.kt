@@ -3,10 +3,7 @@ package com.shersoft.android_ip
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.*
 import java.net.InetAddress
 
@@ -195,6 +192,10 @@ class ConnectedDevice(var contexts: Context) {
         return proc.exitValue()
     }
 
+    suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
+        map { async { f(it) } }.awaitAll()
+    }
+
     fun gethostData(host: String, iDeviceConnected: AndroidIpPlugin.IDeviceConnected) {
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val split: MutableList<String> = host.split(".") as MutableList<String>
@@ -204,15 +205,34 @@ class ConnectedDevice(var contexts: Context) {
         split.forEach { ip += it + "." }
         scope.launch {
             var ipse = arrayOf(10, 20, 80, 156, 229, 250)
-            for (i in 0..255) {
-                var ips = ip + "$i";
+            val array1 = (0 until 90)
+            val array2 = (91 until 180)
+            val array3 = (181 until 255)
+
+//            var arr = arrayOf(array1, array2, array3)
+            var output = (0..255).pmap {
+
+
+                var ips = ip + "$it";
 
                 if (pingHost(ips, 1000) == 0) {
 //                    println("Connection============>$ips")
                     iDeviceConnected.DeviceConnected(ips);
 //                Log.i("Connection=======>", "$ips".toString())
                 };
+
             }
+
+
+//            for (i in 0..255) {
+//                var ips = ip + "$i";
+//
+//                if (pingHost(ips, 1000) == 0) {
+////                    println("Connection============>$ips")
+//                    iDeviceConnected.DeviceConnected(ips);
+////                Log.i("Connection=======>", "$ips".toString())
+//                };
+//            }
         }
 
     }
