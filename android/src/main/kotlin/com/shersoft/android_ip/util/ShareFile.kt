@@ -1,4 +1,4 @@
-package com.shersoft.android_ip
+package com.shersoft.android_ip.util
 
 
 import android.content.Context
@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.shersoft.android_ip.AndroidIpPlugin
 import kotlinx.coroutines.*
 import java.io.*
 

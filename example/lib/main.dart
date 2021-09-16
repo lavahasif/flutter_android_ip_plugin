@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:android_ip/android_ip.dart';
+import 'package:android_ip/pigeon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -17,9 +18,12 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _Connecton_change = '';
   String _ondeviceconnected = '';
+  String _wifiname = '';
   String _ondeviceconnected2 = '';
   String _status = '';
   String _IpAddress_Wifi_tether = 'Unknown';
+  bool _isHotspot = false;
+  bool _isWifi = false;
   String _IpAddress_Wifi_both = 'Unknown';
   String _IpAddress_Wifi = 'Unknown';
   String _IpAddress_Private = 'Unknown';
@@ -31,12 +35,17 @@ class _MyAppState extends State<MyApp> {
   String _IpAddress_Blue_ther = 'Unknown';
   String _connectedlist = '';
 
+  NetworkResult? networkResult = null;
+
+  late AndroidIp androidIp;
+
   @override
   void initState() {
     super.initState();
-    var androidIp = new AndroidIp();
+    androidIp = new AndroidIp();
     var listner = androidIp.onConnectivityChanged;
     var ondeviceconnected = androidIp.onDeviceConnected;
+    permissionchanged();
     listner!.listen((event) {
       setState(() {
         _Connecton_change = event;
@@ -52,6 +61,13 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
   }
 
+  permissionchanged() {
+    var da = androidIp.onPermissionChanged!.listen((event) {
+      print("${event.name}${event.status}");
+      initPlatformState();
+    });
+  }
+
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     String IpAddress_Wifi_tether;
@@ -63,15 +79,17 @@ class _MyAppState extends State<MyApp> {
     String IpAddress_Cellular2;
     String IpAddress_Blue_ther;
     String IpAddress_All;
+    bool isHotspot = false;
+    bool isWifi = false;
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      IpAddress_Wifi_tether =
-          await AndroidIp.IpAddress_Wifi_tether ?? 'Unknown Number';
+      networkResult = await AndroidIp.networkresult;
+      IpAddress_Wifi_tether = (networkResult)!.wifi_tether ?? 'Unknown Number';
+
       await AndroidIp.getConnectedList ?? 'Unknown Number';
-      IpAddress_Wifi_both =
-          await AndroidIp.IpAddress_Wifi_tetherorwifi ?? 'Unknown Number';
-      IpAddress_Wifi = await AndroidIp.IpAddress_Wifi ?? 'Unknown Number';
+      IpAddress_Wifi_both = networkResult?.wifiboth ?? 'Unknown Number';
+      IpAddress_Wifi = networkResult?.wifi ?? 'Unknown Number';
       IpAddress_Private = await AndroidIp.IpAddress_Private ?? 'Unknown Number';
       IpAddress_USB_tether =
           await AndroidIp.IpAddress_USB_tether ?? 'Unknown Number';
@@ -82,6 +100,9 @@ class _MyAppState extends State<MyApp> {
       IpAddress_Blue_ther =
           await AndroidIp.IpAddress_Blue_ther ?? 'Unknown Number';
       IpAddress_All = await AndroidIp.IpAddress_All ?? 'Unknown Number';
+      isHotspot = await AndroidIp.isHotspotEnabled ?? false;
+      isWifi = await AndroidIp.isWifiEnabled ?? false;
+      _wifiname = networkResult?.WifiName ?? "";
     } on PlatformException {
       IpAddress_Wifi_tether = 'Failed to get ';
       IpAddress_Wifi = 'Failed to get ';
@@ -109,6 +130,9 @@ class _MyAppState extends State<MyApp> {
       _IpAddress_Blue_ther = IpAddress_Blue_ther;
       _IpAddress_All = IpAddress_All;
       _IpAddress_Wifi_both = IpAddress_Wifi_both;
+      _isHotspot = isHotspot;
+      _isWifi = isWifi;
+      _wifiname;
     });
   }
 
@@ -171,6 +195,8 @@ class _MyAppState extends State<MyApp> {
                         onPressed: () => _copy(_IpAddress_Blue_ther))
                   ],
                 ),
+                Text("IsHotspot:$_isHotspot"),
+                Text("Iswifi:$_isWifi"),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -182,6 +208,7 @@ class _MyAppState extends State<MyApp> {
                   ],
                 ),
                 Text('Devices $_ondeviceconnected'),
+                Text('wifi Name $_wifiname'),
                 Text('All on: $_IpAddress_All\n'),
                 RaisedButton(
                   color: Colors.blue,
@@ -196,6 +223,35 @@ class _MyAppState extends State<MyApp> {
                   child: Text("Share Me"),
                   onPressed: () async {
                     setShare();
+                  },
+                ),
+                RaisedButton(
+                  color: Colors.blue,
+                  child: Text("open Settings"),
+                  onPressed: () async {
+                    await AndroidIp.OpenSettings;
+                  },
+                ),
+                RaisedButton(
+                  color: Colors.blue,
+                  child: Text("Enable wifi"),
+                  onPressed: () async {
+                    await AndroidIp.EnableWifi;
+                  },
+                ),
+                RaisedButton(
+                  color: Colors.blue,
+                  child: Text("Enable Hotspot"),
+                  onPressed: () async {
+                    await AndroidIp.SetHotspotEnable;
+                  },
+                ),
+                RaisedButton(
+                  color: Colors.blue,
+                  child: Text(
+                      "Enable Permissions ${networkResult?.IsLocationEnabled} "),
+                  onPressed: () async {
+                    await AndroidIp.EnablePermission;
                   },
                 ),
               ],
@@ -217,7 +273,7 @@ class _MyAppState extends State<MyApp> {
       _ondeviceconnected2 = "";
     });
 
-    var da = new AndroidIp().onDeviceConnected!.listen((event) {
+    var da = androidIp.onDeviceConnected!.listen((event) {
       setState(() {
         _ondeviceconnected2 = _ondeviceconnected2 + "," + event;
       });
@@ -229,7 +285,7 @@ class _MyAppState extends State<MyApp> {
       _status = "";
     });
 
-    var da = new AndroidIp().onShared!.listen((event) {
+    var da = androidIp.onShared!.listen((event) {
       setState(() {
         _status = event;
       });

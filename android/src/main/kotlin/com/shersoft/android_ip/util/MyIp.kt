@@ -1,4 +1,4 @@
-package com.shersoft.test.util
+package com.shersoft.android_ip.util
 
 import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
@@ -17,7 +17,6 @@ import com.android.volley.Response
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.shersoft.android_ip.Utilss
 
 import java.io.IOException
 import java.math.BigInteger
@@ -402,7 +401,7 @@ class MyIp(var contexts: Context) {
             } else if (key.contains("wlan1")) {
                 networkIp4LoopbackIps.forEach {
                     if (it.key.contains("wlan1")) return it.value
-                    if (getdeviceIpAddress_Wifi().isNullOrEmpty())
+                    if (getdeviceIpAddress_Wifi()?.contains("null") == true)
                         if (it.key.contains("wlan0")) return it.value
                 }
             }

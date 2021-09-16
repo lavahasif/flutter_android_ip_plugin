@@ -1,4 +1,4 @@
-package com.shersoft.android_ip;
+package com.shersoft.android_ip.util;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;

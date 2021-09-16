@@ -1,14 +1,109 @@
-package com.shersoft.android_ip
+package com.shersoft.android_ip.util
 
+import android.Manifest
 import android.content.Context
+import android.content.Context.CONNECTIVITY_SERVICE
+import android.content.Context.WIFI_SERVICE
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
+import android.net.Uri
+import android.net.wifi.SupplicantState
+import android.net.wifi.WifiConfiguration
+import android.net.wifi.WifiConfiguration.SECURITY_TYPE_OPEN
+import android.net.wifi.WifiManager
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import com.shersoft.android_ip.AndroidIpPlugin
 import kotlinx.coroutines.*
 import java.io.*
+import java.lang.reflect.Method
 import java.net.InetAddress
 
 
-class ConnectedDevice(var contexts: Context) {
+open class ConnectedDevice(var contexts: Context) {
+    init {
+//        EnableDevice(contexts)
+    }
+
+    fun isHotspotEnabled(): Boolean {
+//        val AP_STATE_DISABLING = 10
+//        val AP_STATE_DISABLED = 11
+//        val AP_STATE_ENABLING = 12
+//        val AP_STATE_ENABLED = 13 hotspot on
+//        val AP_STATE_FAILED = 14
+
+
+        val wifiManager =
+            getwifiManager()
+        val method: Method = wifiManager.javaClass.getMethod(
+            "getWifiApState"
+        )
+        method.isAccessible = true
+        val invoke = method.invoke(wifiManager)
+//        println(invoke)
+
+        return invoke == 13;
+    }
+
+    fun isWifiEnabled(): Boolean {
+
+
+        val wifiManager =
+            getwifiManager()
+
+
+        return wifiManager.isWifiEnabled;
+    }
+
+    private val LOCATION = 1
+    fun getSsid(): String {
+        if (ActivityCompat.checkSelfPermission(
+                contexts,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            //Request permission from user
+//            ActivityCompat.requestPermissions(
+//                contexts.,
+//                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+//                LOCATION
+//            )
+        } else { //Permission already granted
+            val wifiInfo = (contexts.getApplicationContext()
+                .getSystemService(WIFI_SERVICE) as WifiManager).connectionInfo
+            if (wifiInfo.supplicantState == SupplicantState.COMPLETED) {
+                val ssid = wifiInfo.ssid //Here you can access your SSID
+                println(ssid)
+            }
+        }
+
+        val wifiManager =
+            getwifiManager()
+
+
+        return wifiManager.connectionInfo.ssid;
+    }
+
+     fun getwifiManager(): WifiManager {
+        val wifiManager =
+            contexts.applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        return wifiManager
+    }
+
+
+
+    fun isWifiConnected(): Boolean {
+
+        val connManager = contexts.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager?
+
+        val wifi: NetworkInfo = connManager?.getNetworkInfo(ConnectivityManager.TYPE_WIFI)!!
+        return wifi.isConnected;
+    }
 
 
     fun getARPIps(): List<Pair<String, String>> {
@@ -237,5 +332,33 @@ class ConnectedDevice(var contexts: Context) {
 
     }
 
+    fun openAppSettings(
+        context: Context?,
+        successCallback: AndroidIpPlugin.OpenAppSettingsSuccessCallback,
+        errorCallback: AndroidIpPlugin.ErrorCallback
+    ) {
+        if (context == null) {
+            Log.d("PermissionConstants", "Context cannot be null.")
+            errorCallback.onError(
+                "PermissionHandler.AppSettingsManager",
+                "Android context cannot be null."
+            )
+            return
+        }
+        try {
+            val settingsIntent = Intent()
+            settingsIntent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+            settingsIntent.addCategory(Intent.CATEGORY_DEFAULT)
+            settingsIntent.data = Uri.parse("package:" + context.packageName)
+            settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+            settingsIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            context.startActivity(settingsIntent)
+            successCallback.onSuccess(true)
+        } catch (ex: java.lang.Exception) {
+            successCallback.onSuccess(false)
+        }
+    }
 
 }
+
