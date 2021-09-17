@@ -243,7 +243,8 @@ class _MyAppState extends State<MyApp> {
                   color: Colors.blue,
                   child: Text("Enable Hotspot"),
                   onPressed: () async {
-                    await AndroidIp.SetHotspotEnable;
+                    Hotspot hotspot = await AndroidIp.SetHotspotEnable;
+                    print("======>${hotspot.encode()}");
                   },
                 ),
                 RaisedButton(

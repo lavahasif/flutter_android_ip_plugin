@@ -10,10 +10,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.net.Uri
 import android.net.wifi.SupplicantState
-import android.net.wifi.WifiConfiguration
-import android.net.wifi.WifiConfiguration.SECURITY_TYPE_OPEN
 import android.net.wifi.WifiManager
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast

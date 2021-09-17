@@ -1,8 +1,10 @@
 package com.shersoft.android_ip
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 
 class PermissionManger(val activity: Activity) :
     io.flutter.plugin.common.PluginRegistry.ActivityResultListener,

@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.shersoft.android_ip.util.*
@@ -83,7 +84,15 @@ class MethodCallImpl(
             NetWork_Interface_enum.networkresult -> settypeSafe(result)
             NetWork_Interface_enum.EnableWifi -> enableDevice.setWifiEnable()
             NetWork_Interface_enum.DisableWifi -> enableDevice.setWifiDisable()
-            NetWork_Interface_enum.SetHotspotEnable -> enableDevice.SetHotspotEnable()
+            NetWork_Interface_enum.SetHotspotEnable -> enableDevice.SetHotspotEnable(object :
+                EnableDevice.Ihotspot {
+                override fun onEnableHotspot(hospot: Pigeon.Hotspot) {
+
+                    if (call.hasArgument("key"))
+                        result.success(hospot.toMap());
+                }
+
+            })
             NetWork_Interface_enum.SetHotspotDisable -> enableDevice.turnOffHotspot()
             NetWork_Interface_enum.IsLocationEnabled -> result.success(
                 if (ActivityCompat.checkSelfPermission(
@@ -91,6 +100,7 @@ class MethodCallImpl(
                         Manifest.permission.ACCESS_FINE_LOCATION
                     ) == 0
                 ) true else false
+
             )
             else -> result.notImplemented()
         }
@@ -136,11 +146,20 @@ class MethodCallImpl(
         if (ContextCompat.checkSelfPermission(mactivity!!, accessFineLocation)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            ActivityCompat.requestPermissions(
-                mactivity!!,
-                arrayOf(accessFineLocation),
-                PermissionManger.ACCESS_FINE_LOCATION_CODE
-            );
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    mactivity!!,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            )
+                ActivityCompat.requestPermissions(
+                    mactivity!!,
+                    arrayOf(accessFineLocation),
+                    PermissionManger.ACCESS_FINE_LOCATION_CODE
+                );
+            else {
+                Toast.makeText(context, "Please EnableLocation", Toast.LENGTH_LONG).show()
+
+            }
         }
     }
 

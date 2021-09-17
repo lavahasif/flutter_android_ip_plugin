@@ -12,18 +12,26 @@ import android.os.Handler
 import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.shersoft.android_ip.Pigeon
 import java.lang.reflect.Method
 
 
 class EnableDevice(contexts: Context) : ConnectedDevice(contexts) {
-    fun SetHotspotEnable() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            turnOnHotspot()
-        } else {
-            if (showWritePermissionSettings())
+    interface Ihotspot {
+        fun onEnableHotspot(hospot: Pigeon.Hotspot);
+    }
 
-                setWifiEnabled(getWifiApConfiguration(), true)
+    fun SetHotspotEnable(callback: Ihotspot): Pigeon.Hotspot? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return turnOnHotspot(callback)
+        } else {
+            if (showWritePermissionSettings()) {
+                val wifiEnabled = setWifiEnabled(getWifiApConfiguration(), true)
+                callback.onEnableHotspot(wifiEnabled)
+                return wifiEnabled
+            }
         }
+        return null;
     }
 
     fun setWifiEnable() {
@@ -60,11 +68,11 @@ class EnableDevice(contexts: Context) : ConnectedDevice(contexts) {
         }
     }
 
-    fun setWifiEnabled(wifiConfig: WifiConfiguration?, enabled: Boolean): Boolean {
+    fun setWifiEnabled(wifiConfig: WifiConfiguration?, enabled: Boolean): Pigeon.Hotspot {
         wifiConfig?.SSID = "share"
         wifiConfig?.preSharedKey = "12345678"
         var wifiManager: WifiManager = getwifiManager()
-        return try {
+        val isenabled = try {
             if (enabled) { //disables wifi hotspot if it's already enabled
                 wifiManager.isWifiEnabled = false
             }
@@ -79,6 +87,11 @@ class EnableDevice(contexts: Context) : ConnectedDevice(contexts) {
             Log.e(this.javaClass.toString(), "", e)
             false
         }
+        val hotspot = Pigeon.Hotspot()
+        hotspot.enabled = isenabled
+        hotspot.name = wifiConfig?.SSID
+        hotspot.presharedkey = wifiConfig?.preSharedKey
+        return hotspot
     }
 
     private val currentConfig: WifiConfiguration? = null
@@ -96,23 +109,54 @@ class EnableDevice(contexts: Context) : ConnectedDevice(contexts) {
     private var mReservation: LocalOnlyHotspotReservation? = null
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private fun turnOnHotspot() {
+    private fun turnOnHotspot(param: Ihotspot): Pigeon.Hotspot {
+        var name: String? = null
+        var pass: String? = null
+        var isenabled: Boolean? = null
         val manager =
             getwifiManager()
+        if (manager.isWifiEnabled)
+            manager.isWifiEnabled = true
         manager.startLocalOnlyHotspot(object : LocalOnlyHotspotCallback() {
             override fun onStarted(reservation: LocalOnlyHotspotReservation?) {
                 super.onStarted(reservation)
                 mReservation = reservation;
+                pass = reservation!!.wifiConfiguration?.preSharedKey
+                name = reservation!!.wifiConfiguration?.SSID
+                isenabled = true;
+                val hotspot = Pigeon.Hotspot()
+                hotspot.enabled = isenabled
+                hotspot.name = name
+                hotspot.presharedkey = pass
+                param.onEnableHotspot(hospot = hotspot)
             }
 
             override fun onStopped() {
                 super.onStopped()
+                isenabled = false;
+                val hotspot = Pigeon.Hotspot()
+                hotspot.enabled = isenabled
+                hotspot.name = name
+                hotspot.presharedkey = pass
+                param.onEnableHotspot(hospot = hotspot)
             }
 
             override fun onFailed(reason: Int) {
                 super.onFailed(reason)
+                isenabled = false;
+                val hotspot = Pigeon.Hotspot()
+                hotspot.enabled = isenabled
+                hotspot.name = name
+                hotspot.presharedkey = pass
+                param.onEnableHotspot(hospot = hotspot)
             }
         }, Handler());
+
+        val hotspot = Pigeon.Hotspot()
+        hotspot.enabled = isenabled
+        hotspot.name = name
+        hotspot.presharedkey = pass
+        return hotspot
     }
 
     fun turnOffHotspot() {

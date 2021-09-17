@@ -82,18 +82,18 @@ class AndroidIp {
     return version;
   }
 
-  static Future<void> get SetHotspotEnable async {
-    await _channel.invokeMethod('SetHotspotEnable');
-    return await _channel.invokeMethod('SetHotspotEnable');
+  static Future<Hotspot> get SetHotspotEnable async {
+    var name = await _channel.invokeMethod('SetHotspotEnable');
+    return Hotspot.decode(name);
   }
 
   static Future<void> get SetHotspotDisable async {
-    await _channel.invokeMethod('SetHotspotEnable');
     return await _channel.invokeMethod('SetHotspotDisable');
   }
 
   static Future<String?> get IpAddress_Wifi_tetherorwifi async {
-    final String? version = await _channel.invokeMethod('Wifi_tetherorWifi');
+    final String? version =
+        await _channel.invokeMethod('Wifi_tetherorWifi', {'key': 'true'});
     return version;
   }
 
